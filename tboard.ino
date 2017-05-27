@@ -32,6 +32,25 @@ int dimmer(int color, int percent) {
   return(output);
 }
 
+int led_map(int x,int y) {
+  int output; 
+
+  x = (COLS_LEDs-1) - x;
+  y = (ROWS_LEDs-1) - y;
+  
+  if (y%2 == 1) {
+    output = ((y+1)*COLS_LEDs-x-1);
+  } else {
+    output = (y*COLS_LEDs+x);
+  }
+  
+  return output;
+}
+
+void setxy(int x, int y, uint32_t c) {
+  leds.setPixel(led_map(x, y), dimmer(c, LIGHT_LEVEL));
+}
+
 void setup()
 {
   pinMode(13, OUTPUT);
@@ -63,24 +82,7 @@ void loop()
   while(1);
 }
 
-int led_map(int x,int y) {
-  int output; 
 
-  x = (COLS_LEDs-1) - x;
-  y = (ROWS_LEDs-1) - y;
-  
-  if (y%2 == 1) {
-    output = ((y+1)*COLS_LEDs-x-1);
-  } else {
-    output = (y*COLS_LEDs+x);
-  }
-  
-  return output;
-}
-
-void setxy(int x, int y, uint32_t c) {
-  leds.setPixel(led_map(x, y), dimmer(c, LIGHT_LEVEL));
-}
 
 
 

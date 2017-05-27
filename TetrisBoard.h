@@ -28,6 +28,7 @@ class TetrisBoard
     int tetMinX();
     int tetMaxX();
     int tetMinY();
+    void adjustTet();
     int _tetX, _tetY, _tetType, _tetRot, _tetColor;
 };
 

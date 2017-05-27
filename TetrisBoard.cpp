@@ -170,6 +170,21 @@ TetrisBoard::TetrisBoard()
     }
   }
 }
+void TetrisBoard::adjustTet()
+{
+  int minX = tetMinX();
+  if (minX < 0) {
+    _tetX -= minX;
+    Serial.print(minX);
+    Serial.println(" placeTet adjusting right");
+  }
+  int maxX = tetMaxX();
+  if (maxX >= DIMX) {
+    _tetX += (DIMX - maxX - 1);
+    Serial.print(DIMX - maxX - 1);
+    Serial.println(" placeTet adjusting left");
+  }
+}
 
 void TetrisBoard::placeTet(int tetType, int tetX, int tetY, int tetColor)
 {
@@ -184,6 +199,7 @@ void TetrisBoard::placeTet(int tetType, int tetX, int tetY, int tetColor)
   Serial.print(",");
   Serial.print(tetY);
   Serial.println(" placeTet");
+  adjustTet();
 }
 
 int TetrisBoard::tetMinX() {
