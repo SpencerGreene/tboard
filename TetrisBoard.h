@@ -25,6 +25,9 @@ class TetrisBoard
   // library-accessible "private" interface
   private:
     int board[DIMX][DIMY];
+    int tetMinX();
+    int tetMaxX();
+    int tetMinY();
     int _tetX, _tetY, _tetType, _tetRot, _tetColor;
 };
 
