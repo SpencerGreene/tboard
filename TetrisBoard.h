@@ -12,7 +12,7 @@
 #define LIGHT_LEVEL 8
 
 #define DIMX 20
-#define DIMY 40
+#define DIMY 24
 
 #define COLS_LEDs 60 // all of the following params need to be adjusted for screen size
 #define ROWS_LEDs 36  // LED_LAYOUT assumed 0 if ROWS_LEDs > 8
@@ -36,7 +36,8 @@ class TetrisBoard
     void setupLEDs();
     void drawTet();
     void eraseTet();
-    void pixels();
+    bool spawn();
+    void gameOver();
 
 
   // library-accessible "private" interface
@@ -50,6 +51,7 @@ class TetrisBoard
     int tetMaxX();
     int tetMinY();
     bool isInTet(int, int);
+    bool isOnBoard(int, int);
 
     // game logic
     void adjustTet();
