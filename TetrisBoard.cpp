@@ -3,10 +3,12 @@
   Copyright (c) 2017 Spencer Greene
 */
 
+#define VERBOSE 1
 
 #include <Arduino.h>
 #include <OctoWS2811.h>
 #include "TetrisBoard.h"
+
 
 #define BLOCK_XOFFSET 10
 #define BLOCK_YOFFSET 0
@@ -16,8 +18,9 @@
 /*
 #define BLOCK_XOFFSET 3
 #define BLOCK_YOFFSET 0
-#define BLOCK_SIZE 3
+#define BLOCK_SIZE 2
 #define ROTATED 1
+// XX need to change DIMX as well, 36 only permits 18 wide
 */
 
 DMAMEM int displayMemory[LEDS_PER_STRIP*6];
@@ -192,6 +195,7 @@ TetrisBoard::TetrisBoard()
 
 void TetrisBoard::setupLEDs()
 {
+  delay(100);
   leds.begin();
   leds.show();
 }
@@ -202,13 +206,13 @@ void TetrisBoard::adjustTet()
   if (minX < 0) {
     _tetX -= minX;
     Serial.print(minX);
-    Serial.println(" placeTet adjusting right");
+    Serial.println(" adjustTet adjusting right");
   }
   int maxX = tetMaxX();
   if (maxX >= DIMX) {
     _tetX += (DIMX - maxX - 1);
     Serial.print(DIMX - maxX - 1);
-    Serial.println(" placeTet adjusting left");
+    Serial.println(" adjustTet adjusting left");
   }
 }
 
@@ -227,6 +231,7 @@ void TetrisBoard::placeTet(int tetType, int tetX, int tetY, int tetColor)
   Serial.print(tetY);
   Serial.println(" placeTet");
   adjustTet();
+  drawTet();
 }
 
 int TetrisBoard::tetMinX() {
@@ -297,7 +302,23 @@ int TetrisBoard::dimmer(int color, int percent) {
 }
 
 void TetrisBoard::setxy(int x, int y, uint32_t c) {
+  if (x < 0 || x >= COLS_LEDs || y < 0 || y > ROWS_LEDs) {
+    return;
+  }
+  
   leds.setPixel(led_map(x, y), dimmer(c, LIGHT_LEVEL));
+  if (VERBOSE) {
+    Serial.print(x);
+    Serial.print(",");
+    Serial.print(y);
+    Serial.print("=");
+    Serial.print(led_map(x,y));
+    Serial.print("<-");
+    Serial.print(c);
+    Serial.print(":");
+    Serial.print(dimmer(c, LIGHT_LEVEL));
+    Serial.println(" setxy");
+  }
 }
 
 
@@ -340,6 +361,14 @@ void TetrisBoard::paintTet(uint32_t c)
 
 void TetrisBoard::paintBlock(int x, int y, uint32_t c)
 {
+  if (VERBOSE) {
+    Serial.print(x);
+    Serial.print(",");
+    Serial.print(y);
+    Serial.print("<-");
+    Serial.print(c);
+    Serial.println(" paintBlock");
+  }
   if (x < 0 || y < 0 || x > DIMX || y > DIMY) return;
   int xo = BLOCK_XOFFSET + BLOCK_SIZE * x;
   int yo = BLOCK_YOFFSET + BLOCK_SIZE * y;
@@ -347,12 +376,13 @@ void TetrisBoard::paintBlock(int x, int y, uint32_t c)
   for (int xi = 0; xi < BLOCK_SIZE; xi++) {
     for (int yi = 0; yi < BLOCK_SIZE; yi++) {
       if (ROTATED) {
-        setxy(yi + yo, xi + xo, c);
+        setxy(yi + yo, ROWS_LEDs - 1 - (xi + xo), c);
       } else {
         setxy(xi + xo, yi + yo, c);
       }
     }
   }
+  leds.show();
 }
 
 
@@ -450,6 +480,14 @@ void TetrisBoard::killRow(int r)
       board[x][y] = board[x][y+1];
       paintBlock(x, y, board[x][y]);
     }
+  }
+}
+
+void TetrisBoard::pixels() {
+  Serial.print("pixels!");
+  for (int x = 0; x < 60; x++) {
+    leds.setPixel(x, 0x110000);
+    leds.show();
   }
 }
 

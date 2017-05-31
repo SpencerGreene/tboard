@@ -9,7 +9,7 @@
 
 #include <OctoWS2811.h>
 
-#define LIGHT_LEVEL 5
+#define LIGHT_LEVEL 8
 
 #define DIMX 20
 #define DIMY 40
@@ -36,6 +36,7 @@ class TetrisBoard
     void setupLEDs();
     void drawTet();
     void eraseTet();
+    void pixels();
 
 
   // library-accessible "private" interface

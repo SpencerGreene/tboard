@@ -1,7 +1,6 @@
 // Created 26 May 2017
 
 #include "TetrisBoard.h"
-// #include <OctoWS2811.h>
 
 TetrisBoard game;
 
@@ -13,14 +12,14 @@ void setup()
 
 void loop()
 {
+  delay(200); 
   // piece type 5 in default rotation, at loc 10x20, color=3
-  game.placeTet(5, 2, 20, 3); 	
+  game.placeTet(5, 2, 4, 3); 	
   Serial.println("placed at 2, 20");
   game.dump();
   game.freezeTet();
-  while(1);
   game.dump();
-  game.placeTet(4, 10, 20, 2);
+  game.placeTet(4, 10, 7, 2);
   game.dump();
   game.drawTet();
   delay(1000);
