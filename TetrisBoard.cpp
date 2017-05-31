@@ -8,6 +8,10 @@
 #include <OctoWS2811.h>
 #include "TetrisBoard.h"
 
+#define BLOCK_XOFFSET 10
+#define BLOCK_YOFFSET 0
+#define BLOCK_SIZE 2
+
 DMAMEM int displayMemory[LEDS_PER_STRIP*6];
 int drawingMemory[LEDS_PER_STRIP*6];
 OctoWS2811 leds(LEDS_PER_STRIP, displayMemory, drawingMemory, config);
@@ -178,7 +182,7 @@ TetrisBoard::TetrisBoard()
   }
 }
 
-void TetrisBoard::init()
+void TetrisBoard::setupLEDs()
 {
   leds.begin();
   leds.show();
@@ -223,7 +227,11 @@ void TetrisBoard::paintTet(uint32_t c)
 
 void TetrisBoard::drawBlock(int x, int y, uint32_t c)
 {
-  
+  for (int xi = 0; xi < BLOCK_SIZE; xi++) {
+    for (int yi = 0; yi < BLOCK_SIZE; yi++) {
+      setxy(xi + BLOCK_XOFFSET, yi + BLOCK_YOFFSET, c);
+    }
+  }
 }
 
 void TetrisBoard::placeTet(int tetType, int tetX, int tetY, int tetColor)
@@ -285,30 +293,6 @@ int TetrisBoard::tetMaxX() {
 }
 
 
-void TetrisBoard::rotTet(void)
-{
-  Serial.println("rotTet");
-}
-
-void TetrisBoard::dump(void)
-{
-  Serial.println("dump");
-}
-
-bool TetrisBoard::moveTet(int xOffset, int yOffset)
-{
-  Serial.print(xOffset);
-  Serial.print(",");
-  Serial.print(yOffset);
-  Serial.println(" moveDown");
-  return(1);
-}
-
-void TetrisBoard::freezeTet(void)
-{
-  Serial.println("freezeTet");
-}
-
 bool TetrisBoard::isInTet(int x, int y)
 {
   int xOffset = x - _tetX;
@@ -352,3 +336,56 @@ int TetrisBoard::led_map(int x,int y) {
   
   return output;
 }
+
+
+bool TetrisBoard::moveTet(int xOffset, int yOffset)
+{
+
+  Serial.print(xOffset);
+  Serial.print(",");
+  Serial.print(yOffset);
+  Serial.println(" moveDown");
+  
+  eraseTet();
+  _tetX += xOffset;
+  _tetY += yOffset;
+  if (tetCollide()) {
+    _tetX -= xOffset;
+    _tetY -= yOffset;
+    return 0;
+  }
+  
+  drawTet();
+  return(1);
+}
+
+// ///////////////
+
+void TetrisBoard::freezeTet(void)
+{
+  Serial.println("freezeTet");
+}
+
+void TetrisBoard::rotTet(void)
+{
+  Serial.println("rotTet");
+}
+
+void TetrisBoard::dump(void)
+{
+  Serial.println("dump");
+}
+
+// return true iff tet position collides with board already in place
+bool TetrisBoard::tetCollide() 
+{
+  for (int x = _tetX; x < _tetX + 4; x++) {
+    for (int y = _tetY; y < _tetY + 4; y++) {
+      if (isInTet(x, y) && board[x][y] > 0) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+

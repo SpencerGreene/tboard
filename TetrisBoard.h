@@ -33,7 +33,7 @@ class TetrisBoard
     void dump();
     bool moveTet(int, int);
     void freezeTet();
-    void init();
+    void setupLEDs();
     void drawTet();
     void eraseTet();
 
@@ -52,6 +52,7 @@ class TetrisBoard
     int led_map(int, int);
     void paintTet(uint32_t);
     void drawBlock(int, int, uint32_t);
+    bool tetCollide();
 };
 
 #endif
