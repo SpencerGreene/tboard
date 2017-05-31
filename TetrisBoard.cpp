@@ -11,6 +11,14 @@
 #define BLOCK_XOFFSET 10
 #define BLOCK_YOFFSET 0
 #define BLOCK_SIZE 2
+#define ROTATED 0
+
+/*
+#define BLOCK_XOFFSET 3
+#define BLOCK_YOFFSET 0
+#define BLOCK_SIZE 3
+#define ROTATED 1
+*/
 
 DMAMEM int displayMemory[LEDS_PER_STRIP*6];
 int drawingMemory[LEDS_PER_STRIP*6];
@@ -25,8 +33,8 @@ uint8_t const tetrimino[7][4][4][4] PROGMEM = {
   0, 0, 1, 0},
 
  {0, 0, 0, 0,
-  0, 0, 0, 0,
   1, 1, 1, 1,
+  0, 0, 0, 0,
   0, 0, 0, 0},
   
  {0, 0, 1, 0,
@@ -204,35 +212,6 @@ void TetrisBoard::adjustTet()
   }
 }
 
-void TetrisBoard::eraseTet()
-{
-  paintTet(0);
-}
-
-void TetrisBoard::drawTet()
-{
-  paintTet(colors[_tetColor]);
-}
-
-void TetrisBoard::paintTet(uint32_t c)
-{
-  for (int x = _tetX; x < _tetX + 4; x++) {
-    for (int y = _tetY; y < _tetY + 4; y++) {
-      if (isInTet(x, y)) {
-        drawBlock(x, y, c);
-      }
-    }
-  }
-}
-
-void TetrisBoard::drawBlock(int x, int y, uint32_t c)
-{
-  for (int xi = 0; xi < BLOCK_SIZE; xi++) {
-    for (int yi = 0; yi < BLOCK_SIZE; yi++) {
-      setxy(xi + BLOCK_XOFFSET, yi + BLOCK_YOFFSET, c);
-    }
-  }
-}
 
 void TetrisBoard::placeTet(int tetType, int tetX, int tetY, int tetColor)
 {
@@ -338,6 +317,45 @@ int TetrisBoard::led_map(int x,int y) {
 }
 
 
+void TetrisBoard::eraseTet()
+{
+  paintTet(0);
+}
+
+void TetrisBoard::drawTet()
+{
+  paintTet(colors[_tetColor]);
+}
+
+void TetrisBoard::paintTet(uint32_t c)
+{
+  for (int x = _tetX; x < _tetX + 4; x++) {
+    for (int y = _tetY; y < _tetY + 4; y++) {
+      if (isInTet(x, y)) {
+        paintBlock(x, y, c);
+      }
+    }
+  }
+}
+
+void TetrisBoard::paintBlock(int x, int y, uint32_t c)
+{
+  if (x < 0 || y < 0 || x > DIMX || y > DIMY) return;
+  int xo = BLOCK_XOFFSET + BLOCK_SIZE * x;
+  int yo = BLOCK_YOFFSET + BLOCK_SIZE * y;
+        
+  for (int xi = 0; xi < BLOCK_SIZE; xi++) {
+    for (int yi = 0; yi < BLOCK_SIZE; yi++) {
+      if (ROTATED) {
+        setxy(yi + yo, xi + xo, c);
+      } else {
+        setxy(xi + xo, yi + yo, c);
+      }
+    }
+  }
+}
+
+
 bool TetrisBoard::moveTet(int xOffset, int yOffset)
 {
 
@@ -359,21 +377,50 @@ bool TetrisBoard::moveTet(int xOffset, int yOffset)
   return(1);
 }
 
-// ///////////////
-
 void TetrisBoard::freezeTet(void)
 {
+  for (int x = _tetX; x < _tetX + 4; x++) {
+    for (int y = _tetY; y < _tetY + 4; y++) {
+      if (isInTet(x, y)) {
+        board[x][y] = _tetColor;
+      }
+    }
+  }
+  int row;
+  while ((row = lowestFullRow()) > -1) {
+    killRow(row);
+  }
   Serial.println("freezeTet");
+}
+
+
+// return smallest y-coordinate of a filled row, or -1 if none
+int TetrisBoard::lowestFullRow() {
+  for (int y = 0; y < DIMY; y++) {
+    int count = 0;
+    for (int x = 0; x < DIMX; x++) {
+      count += (board[x][y] > 0) ? 1 : 0;  
+    }
+    if (count == DIMX) {
+      return y;
+    }
+  }
+  return(-1);
 }
 
 void TetrisBoard::rotTet(void)
 {
   Serial.println("rotTet");
-}
-
-void TetrisBoard::dump(void)
-{
-  Serial.println("dump");
+  eraseTet();
+  _tetRot = (_tetRot + 1) % 4;
+  if (tetCollide()) {
+    _tetRot = (_tetRot + 3) % 4;
+  }
+  adjustTet();
+  if (tetCollide()) {
+    _tetRot = (_tetRot + 3) % 4;
+  }
+  drawTet();
 }
 
 // return true iff tet position collides with board already in place
@@ -388,4 +435,23 @@ bool TetrisBoard::tetCollide()
   }
   return 0;
 }
+
+// ///////////////
+
+void TetrisBoard::dump(void)
+{
+  Serial.println("dump");
+}
+
+void TetrisBoard::killRow(int r) 
+{
+  for (int y = r; y < DIMY - 1; y++) {
+    for (int x = 0; x < DIMX; x++) {
+      board[x][y] = board[x][y+1];
+      paintBlock(x, y, board[x][y]);
+    }
+  }
+}
+
+
 

@@ -40,19 +40,28 @@ class TetrisBoard
 
   // library-accessible "private" interface
   private:
+    // game state
     int board[DIMX][DIMY];
+    int _tetX, _tetY, _tetType, _tetRot, _tetColor;
+
+    // helper functions
     int tetMinX();
     int tetMaxX();
     int tetMinY();
-    void adjustTet();
     bool isInTet(int, int);
-    int _tetX, _tetY, _tetType, _tetRot, _tetColor;
-    void setxy(int, int, uint32_t);
+
+    // game logic
+    void adjustTet();
+    bool tetCollide();
+    int lowestFullRow();
+    void killRow(int);
+
+    // rendering
     int dimmer(int, int);
     int led_map(int, int);
+    void setxy(int, int, uint32_t);
     void paintTet(uint32_t);
-    void drawBlock(int, int, uint32_t);
-    bool tetCollide();
+    void paintBlock(int, int, uint32_t);
 };
 
 #endif
