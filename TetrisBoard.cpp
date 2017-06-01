@@ -29,6 +29,83 @@ OctoWS2811 leds(LEDS_PER_STRIP, displayMemory, drawingMemory, config);
 
 uint32_t const colors[] = { 0, 0xff0000, 0x00ff00, 0x0000ff, 0x888800, 0x880088, 0x008888, 0xCC4400, 0x44cc00, 0xCC0044, 0x4400cc, 0x00cc44, 0x0044cc };
 
+uint8_t const MAP_GAME[] = {
+  B00111000,
+  B01100100,
+  B01000000,
+  B01011100,
+  B01000100,
+  B01100100,
+  B00111000,
+  B00000000,
+
+  B00010000,
+  B00101000,
+  B01000100,
+  B01111100,
+  B01000100,
+  B01000100,
+  B01000100,
+  B00000000,
+  
+  B01000100,
+  B01101100,
+  B01010100,
+  B01010100,
+  B01000100,
+  B01000100,
+  B01000100,
+  B00000000,
+  
+  B01111100,
+  B01000000,
+  B01000000,
+  B01111100,
+  B01000000,
+  B01000000,
+  B01111100,
+  B00000000
+};
+
+
+uint8_t const MAP_OVER[] = {
+  B00111000,
+  B01101100,
+  B01000100,
+  B01000100,
+  B01000100,
+  B01101100,
+  B00111000,
+  B00000000,
+
+  B01000100,
+  B01000100,
+  B01000100,
+  B01000100,
+  B01000100,
+  B00101000,
+  B00010000,
+  B00000000,
+  
+  B01111100,
+  B01000000,
+  B01000000,
+  B01111100,
+  B01000000,
+  B01000000,
+  B01111100,
+  B00000000,
+  
+  B01111000,
+  B01100100,
+  B01001100,
+  B01110000,
+  B01001000,
+  B01000100,
+  B01000100,
+  B00000000,
+};
+
 uint8_t const tetrimino[7][4][4][4] PROGMEM = {
 {{0, 0, 1, 0,  // I in 4 rotations
   0, 0, 1, 0,
@@ -186,22 +263,23 @@ TetrisBoard::TetrisBoard()
 {
   // initialize this instance's variables
 
+
+}
+
+void TetrisBoard::setupGame()
+{
   for (int x = 0; x < DIMX; x++) {
     for (int y = 0; y < DIMY; y++) {
       board[x][y] = 0;
     }
   }
-}
 
-void TetrisBoard::setupLEDs()
-{
-  delay(100);
-  leds.begin();
-  leds.show();
+  leds.begin();  
   for (int y = 0; y < DIMY; y++) {
     paintBlock(-1, y, 0xffffff);
     paintBlock(DIMX, y, 0xffffff);
   }
+  delay(100);
   leds.show();
 }
 
@@ -221,23 +299,6 @@ void TetrisBoard::adjustTet()
   }
 }
 
-
-void TetrisBoard::placeTet(int tetType, int tetX, int tetY, int tetColor)
-{
-  _tetType = tetType;
-  _tetX = tetX;
-  _tetY = tetY;
-  _tetRot = 0;
-  _tetColor = tetColor;
-  Serial.print(tetType);
-  Serial.print(" at ");
-  Serial.print(tetX);
-  Serial.print(",");
-  Serial.print(tetY);
-  Serial.println(" placeTet");
-  adjustTet();
-  drawTet();
-}
 
 int TetrisBoard::tetMinX() {
   int x = 0;
@@ -356,6 +417,7 @@ void TetrisBoard::eraseTet()
 void TetrisBoard::drawTet()
 {
   paintTet(colors[_tetColor]);
+  leds.show();
 }
 
 void TetrisBoard::paintTet(uint32_t c)
@@ -367,7 +429,6 @@ void TetrisBoard::paintTet(uint32_t c)
       }
     }
   }
-  leds.show();
 }
 
 void TetrisBoard::paintBlock(int x, int y, uint32_t c)
@@ -407,11 +468,11 @@ bool TetrisBoard::moveTet(int xOffset, int yOffset)
     Serial.print(yOffset);
     Serial.println(" moveTet");
   }
-  
+
   eraseTet();
   _tetX += xOffset;
   _tetY += yOffset;
-  if (tetCollide()) {
+  if (tetCollide() || tetMinX() < 0 || tetMaxX() >= DIMX) {
     _tetX -= xOffset;
     _tetY -= yOffset;
     drawTet();
@@ -550,6 +611,18 @@ bool TetrisBoard::spawn()
 void TetrisBoard::gameOver()
 {
   Serial.println("Game Over!");
+  for (int y = 0; y < 32; y++) {
+    int byte1 = MAP_GAME[31 - y];
+    int byte2 = MAP_OVER[31 - y];
+    for (int x = 0; x < 8; x++) {
+      if (byte1 & 0x80) setxy(x, y + 2, 0xffff33);
+      if (byte2 & 0x80) setxy(x + 52, y + 2, 0xffff33);
+      byte1 <<= 1;
+      byte2 <<= 1;
+    }
+    leds.show();
+  }
+
 }
 
 

@@ -28,14 +28,13 @@ class TetrisBoard
   // user-accessible "public" interface
   public:
     TetrisBoard();
-    void placeTet(int, int, int, int);
     void rotTet();
     void dump();
     bool moveTet(int, int);
     void freezeTet();
-    void setupLEDs();
-    void drawTet();
-    void eraseTet();
+    void setupGame();
+    
+
     bool spawn();
     void gameOver();
 
@@ -65,6 +64,8 @@ class TetrisBoard
     void setxy(int, int, uint32_t);
     void paintTet(uint32_t);
     void paintBlock(int, int, uint32_t);
+    void drawTet();
+    void eraseTet();
 };
 
 #endif

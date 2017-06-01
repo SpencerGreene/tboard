@@ -3,22 +3,25 @@
 #include "TetrisBoard.h"
 
 // teensy pinout
-#define BUT_ROT 22
-#define BUT_LF  1
-#define BUT_RT  17
-#define BUT_DRP 18
-#define UNCONNECTED 0
+
+#define BUT_LF  0
+#define BUT_RT  23
+#define BUT_DRP 19
+#define BUT_ROT 17
+#define UNCONNECTED 1
 
 #define PRESSED 0       // for pullup buttons
 #define NOTPRESSED 1
 
-#define STEPTIME 200    // in msec
-#define BUTTONTIME  50     // time between button presses
+#define STEPTIME    300   // time between down steps, in msec
+#define BUTTONTIME  50    // time between button presses
+#define DROPTIME    10    // time between steps when dropping fast
 
 TetrisBoard game;
 uint32_t moveTime;
 uint32_t inputTime;
 bool keepGoing;
+bool dropping = 0;
 
 bool button_lf = NOTPRESSED;
 bool button_rt = NOTPRESSED;
@@ -35,10 +38,7 @@ void setup()
 
   randomSeed(analogRead(UNCONNECTED));
 
-  game.setupLEDs();
-  game.spawn();
-  moveTime = millis();
-  inputTime = millis();
+  restartGame();
 }
 
 // return the number of whichever button went from unpressed to pressed
@@ -123,39 +123,61 @@ int button_resolve(int changed)
     return changed;
 }
 
+void restartGame() 
+{
+  game.setupGame();
+  game.spawn();
+  moveTime = millis();
+  inputTime = millis();
+
+  dropping = 0;
+
+  button_lf = NOTPRESSED;
+  button_rt = NOTPRESSED;
+  button_rot = NOTPRESSED;
+  button_drp = NOTPRESSED;
+}
+
 void loop()
 {
+  int nextTime;
+  
   if (millis() > inputTime + BUTTONTIME) {
     inputTime = millis();
     switch(readButtons()) {
       case -1:
         break;
       case BUT_LF:
-        Serial.println("move left");
+        game.moveTet(-1,0);
         break;
       case BUT_RT:
-        Serial.println("move right");
+        game.moveTet(1,0);
         break;
       case BUT_ROT:
-        Serial.println("rotate");
         game.rotTet();
         break;
       case BUT_DRP:
-        Serial.println("drop");
+        dropping = 1;
         break;
       default:
         break;
     }
   }
-  if (millis() > moveTime + STEPTIME) {
-    moveTime += STEPTIME;
+
+  nextTime = dropping ? DROPTIME : STEPTIME;
+  
+  if (millis() > moveTime + nextTime) {
+    moveTime += nextTime;
     keepGoing = game.moveTet(0, -1);
     if (keepGoing == 0) {
       game.freezeTet();
-      keepGoing = game.spawn(); 
-      if (keepGoing == 0) {
+      dropping = 0;
+      if (game.spawn() == 0) {
         game.gameOver();
-        while(1);
+        while (digitalRead(BUT_LF) == NOTPRESSED || digitalRead(BUT_RT) == NOTPRESSED) {
+          ;
+        }
+        restartGame();     
       }
     }
   }
